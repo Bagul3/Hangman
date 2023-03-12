@@ -31,6 +31,13 @@ public class GameController
       this.gameService = gameService;
    }
 
+   /**
+    * REST endpoint for creating a new game.
+    *
+    * @param gameCreationRequest the game creation request
+    * @return the game response
+    * @throws Exception if there was an error creating the game
+    */
    @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
    public ResponseEntity<GameResponse> create(
       @RequestBody GameCreationRequest gameCreationRequest)
@@ -39,6 +46,13 @@ public class GameController
       return new ResponseEntity<>(gameService.createGame(gameCreationRequest), HttpStatus.CREATED);
    }
 
+   /**
+    * REST endpoint for making a guess on an existing game.
+    *
+    * @param id the game ID
+    * @param guessedLetter the guessed letter
+    * @return the game response
+    */
    @PutMapping(value = "/{id}/guess", produces = MediaType.APPLICATION_JSON_VALUE)
    public ResponseEntity<GameResponse> guess(
       @PathVariable(value = "id")int id,
@@ -47,6 +61,12 @@ public class GameController
       return new ResponseEntity<>(gameService.guessMade(guessedLetter, id), HttpStatus.OK);
    }
 
+   /**
+    * REST endpoint for deleting an existing game.
+    *
+    * @param id the game ID
+    * @return a response entity with a success message
+    */
    @DeleteMapping(value = "/{id}/delete", produces = MediaType.APPLICATION_JSON_VALUE)
    @ResponseStatus(HttpStatus.OK)
    public ResponseEntity<String> delete(@PathVariable int id)
