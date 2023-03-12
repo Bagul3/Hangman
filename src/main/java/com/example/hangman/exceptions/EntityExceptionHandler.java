@@ -21,10 +21,10 @@ public class EntityExceptionHandler
    }
 
    @ExceptionHandler({GameNotFoundException.class})
-   public final ResponseEntity<ExceptionResponse> handleGameNotFoundException(GameNotFoundException studentNotFoundException,
+   public final ResponseEntity<ExceptionResponse> handleGameNotFoundException(GameNotFoundException gameNotFoundException,
       WebRequest request) {
       ExceptionResponse exceptionResponse = new ExceptionResponse(LocalDateTime.now(),
-         studentNotFoundException.getMessage(),
+         gameNotFoundException.getMessage(),
          request.getDescription(false));
 
       return new ResponseEntity<>(exceptionResponse, HttpStatus.NOT_FOUND);

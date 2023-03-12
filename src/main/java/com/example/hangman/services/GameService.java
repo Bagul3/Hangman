@@ -6,6 +6,7 @@ import com.example.hangman.models.requests.GameCreationRequest;
 import com.example.hangman.models.requests.GameGuessRequest;
 import com.example.hangman.models.responses.GameResponse;
 import com.example.hangman.repositories.GameRepository;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -44,17 +45,18 @@ public class GameService
       if (game == null)
          throw new GameNotFoundException(String.format("Could not find game with id: {%s}", id));
 
-      if (hasGameEnded(game))
+      if (isGameFinished(game.getEndTime()))
          throw new IllegalArgumentException("Game has ended.");
 
       Set<Character> charactersGuessed = updateCharactersGuessed(gameGuessRequest, game);
       String remainingWord = calculateWordRemaining(charactersGuessed, game.getWord().toCharArray());
       Set<Character> lettersRemaining = lettersRemaining(charactersGuessed);
+      int guessesRemaining = calculateNumberOfGuessesRemaining(game.getNumberOfGuesses(), game.getNumberOfGuessesAllowed());
 
       if (hasGameEnded(id, game, charactersGuessed, remainingWord))
          return new GameResponse.GameResponseBuilder()
             .id(id).word(remainingWord)
-            .guessesRemaining(game.getNumberOfGuesses())
+            .guessesRemaining(guessesRemaining)
             .lettersRemaining(lettersRemaining)
             .lettersGuessed(charactersGuessed)
             .message("Game over")
@@ -64,8 +66,9 @@ public class GameService
       return new GameResponse.GameResponseBuilder()
          .id(id)
          .word(remainingWord)
-         .guessesRemaining(game.getNumberOfGuessesAllowed() - game.getNumberOfGuesses() + 1)
+         .guessesRemaining(guessesRemaining)
          .lettersRemaining(lettersRemaining)
+         .lettersGuessed(charactersGuessed)
          .build();
    }
 
@@ -74,14 +77,17 @@ public class GameService
       gameRepository.deleteGame(id);
    }
 
-   private boolean hasGameEnded(Game game)
+   private int calculateNumberOfGuessesRemaining(int guessesMade, int guessesAllowed)
    {
-      return game.getEndTime() != null;
+      int incrementGuess = 1;
+      return guessesAllowed - (guessesMade + incrementGuess);
    }
 
    private Set<Character> updateCharactersGuessed(GameGuessRequest gameGuessRequest, Game game)
    {
       Set<Character> charactersGuessed = convertToCharSet(game.getGuessedLetters());
+      if (hasLetterAlreadyBeenGuessed(gameGuessRequest.getLetter(), charactersGuessed))
+         throw new IllegalArgumentException(String.format("Letter {%s} has already been guessed.", gameGuessRequest.getLetter()));
       charactersGuessed.add(gameGuessRequest.getLetter());
       return charactersGuessed;
    }
@@ -96,6 +102,16 @@ public class GameService
       return false;
    }
 
+   private boolean isGameFinished(Timestamp endTime)
+   {
+      return endTime != null;
+   }
+
+   private boolean hasLetterAlreadyBeenGuessed(Character guessedLetter, Set<Character> guessedLetters)
+   {
+      return guessedLetters.contains(guessedLetter);
+   }
+
    private void updateGame(int id, int numberOfGuesses, Set<Character> charactersGuessed)
    {
       gameRepository.updateGame(charactersGuessed.toArray(Character[]::new), numberOfGuesses+1, id);
@@ -106,7 +122,7 @@ public class GameService
       return word.equals(guessedWord);
    }
 
-   public String calculateWordRemaining(Set<Character> charactersGuessed, char[] word)
+   private String calculateWordRemaining(Set<Character> charactersGuessed, char[] word)
    {
       char[] output = new char[word.length];
       Arrays.fill(output, '_');

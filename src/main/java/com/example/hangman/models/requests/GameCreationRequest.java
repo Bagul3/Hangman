@@ -1,5 +1,6 @@
 package com.example.hangman.models.requests;
 
+import com.example.hangman.helpers.StringLowerCase;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import lombok.ToString;
 @AllArgsConstructor
 public class GameCreationRequest
 {
+   @StringLowerCase
    private String word;
    private int numberOfGuesses;
 }
